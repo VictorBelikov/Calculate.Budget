@@ -37,7 +37,7 @@
     "space-in-parens": "off",
     "no-param-reassign": "off",
     "no-shadow": "warn",
-    "curly": "warn",
+    "curly": "off",
     "block-scoped-var": "warn",
     "no-redeclare": "warn",
     "comma-spacing": "warn",

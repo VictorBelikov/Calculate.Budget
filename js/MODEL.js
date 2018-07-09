@@ -1,16 +1,24 @@
-// MODULE (DATA).
+// MODEL (DATA).
 // 1) Add the new item to our data structure. 2) Calculate budget.
-const BudgetController = (function() {
-  const Expense = function(id, description, value) {
+const BudgetDataCtrl = (function() {
+  function Income(id, description, moneyValue) {
     this.id = id;
     this.description = description;
-    this.value = value;
+    this.moneyValue = moneyValue;
+  }
+
+  function Expense(id, description, moneyValue) {
+    this.id = id;
+    this.description = description;
+    this.moneyValue = moneyValue;
     this.percentage = -1;
-  };
+  }
 
   Expense.prototype.calcPercentage = function(totalIncome) {
     if (totalIncome > 0) {
-      this.percentage = Math.round((this.value / totalIncome) * 100);
+      this.percentage = Math.round((this.moneyValue / totalIncome) * 100);
+    } else {
+      this.percentage = -1;
     }
   };
 
@@ -18,57 +26,48 @@ const BudgetController = (function() {
     return this.percentage;
   };
 
-  const Income = function(id, description, value) {
-    this.id = id;
-    this.description = description;
-    this.value = value;
-  };
-
-  const calculateTotal = function(type) {
-    let sum = 0;
-    data.allItems[type].forEach(el => {
-      sum += el.value;
-    });
-    data.totals[type] = sum;
-  };
-
-  // Тут храняться данные пока скрипт не будет перезапущен
   const data = {
     allItems: {
-      exp: [], // все объекты расходов
-      inc: [] // все объекты доходов
+      inc: [],
+      exp: []
     },
     totals: {
-      exp: 0, // общая сумма расходов
-      inc: 0 // общая сумма доходов
+      inc: 0,
+      exp: 0
     },
-    budget: 0,
-    percentage: -1
+    pureIncome: 0,
+    totalPercentage: -1
   };
 
+  function calculateTotal(type) {
+    let sum = 0;
+    data.allItems[type].forEach(el => {
+      sum += el.moneyValue;
+    });
+    data.totals[type] = sum;
+  }
+
   return {
-    addItem(type, descr, val) {
-      let newItem, id;
-
-      if (data.allItems[type].length !== 0) {
-        id = data.allItems[type][data.allItems[type].length - 1].id + 1;
-      } else {
+    addItem(type, descr, moneyVal) {
+      let newItem,
         id = 0;
+
+      if (data.allItems[type].length > 0) {
+        const tempArr = data.allItems[type];
+        id = tempArr[tempArr.length - 1].id + 1;
       }
 
-      if (type === 'exp') {
-        newItem = new Expense(id, descr, val);
-      } else if (type === 'inc') {
-        newItem = new Income(id, descr, val);
+      if (type === 'inc') {
+        newItem = new Income(id, descr, moneyVal);
+      } else if (type === 'exp') {
+        newItem = new Expense(id, descr, moneyVal);
       }
-
       data.allItems[type].push(newItem);
       return newItem;
     },
 
     deleteItem(type, id) {
       const ids = data.allItems[type].map(el => el.id);
-
       const index = ids.indexOf(id);
       if (~index) {
         data.allItems[type].splice(index, 1);
@@ -76,37 +75,37 @@ const BudgetController = (function() {
     },
 
     calculateBudget() {
-      // Calculate total income and expenses
-      calculateTotal('exp');
+      // 1. Calculate total income and expenses
       calculateTotal('inc');
-
-      // Calculate the budget: income - expenses
-      data.budget = data.totals.inc - data.totals.exp;
-
-      // Calculate the percentage of income that we spent
+      calculateTotal('exp');
+      // 2. Calculate percentage
+      data.pureIncome = data.totals.inc - data.totals.exp;
       if (data.totals.inc > 0) {
-        data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+        data.totalPercentage = Math.round((data.totals.exp / data.totals.inc) * 100);
       }
     },
 
-    calculatePercentages() {
+    getBudget() {
+      return {
+        pureIncome: data.pureIncome,
+        totalInc: data.totals.inc,
+        totalExp: data.totals.exp,
+        totalPercentage: data.totalPercentage
+      };
+    },
+
+    calcPercentageEachItem() {
       data.allItems.exp.forEach(el => {
         el.calcPercentage(data.totals.inc);
       });
     },
 
-    getPercentages() {
-      const allPerc = data.allItems.exp.map(el => el.getPercentage());
-      return allPerc; // получили и вернули массив из скидок
+    getPercentageEachItem() {
+      return data.allItems.exp.map(el => el.getPercentage());
     },
 
-    getBudget() {
-      return {
-        budget: data.budget,
-        totalInc: data.totals.inc,
-        totalExp: data.totals.exp,
-        percentage: data.percentage
-      };
+    testing() {
+      console.log(data);
     }
   };
 })();

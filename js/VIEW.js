@@ -1,100 +1,105 @@
 // VIEW.
 // 1) Get input values. 2) Add the new item to the UI. 3) Update UI.
 const UIController = (function() {
-  const DOMstrings = {
+  const DOMStrings = {
     inputType: '.add__type',
     inputDescription: '.add__description',
-    inputValue: '.add__value',
-    inputButton: '.add__btn',
-    incomeContainer: '.income__list',
-    expensesContainer: '.expenses__list',
+    inputMoneyValue: '.add__value',
+    addButton: '.add__btn',
+    incomesList: '.income__list',
+    expensesList: '.expenses__list',
     budgetLabel: '.budget__value',
     incomeLabel: '.budget__income--value',
-    expensesLabel: '.budget__expenses--value',
-    percentageLabel: '.budget__expenses--percentage',
+    expenseLabel: '.budget__expenses--value',
+    totalPercentageLabel: '.budget__expenses--percentage',
+    eachPercentageLable: '.item__percentage',
     container: '.container',
-    expensesPercLabel: '.item__percentage',
     dateLabel: '.budget__title--month'
   };
 
   function formatNumber(num, type) {
-    num = Math.abs(num); // по модулю
-    num = num.toFixed(2); // add decimal point
+    num = Math.abs(num); // убираем знак
+    num = num.toFixed(2);
 
-    // add comma separating the thousands
     const numSplit = num.split('.');
+    const dec = numSplit[1];
     let int = numSplit[0];
     if (int.length > 3) {
       int = int.substr(0, int.length - 3) + ',' + int.substr(int.length - 3, 3);
     }
-    const dec = numSplit[1];
-
-    // + or - before number
     return (type === 'exp' ? '-' : '+') + ' ' + int + '.' + dec;
   }
 
-  function nodeListForEach(list, callback) {
+  function nodeListForEach(list, callBack) {
     for (let i = 0; i < list.length; i++) {
-      callback(list[i], i);
+      callBack(list[i], i);
     }
   }
 
   return {
-    getInput() {
+    getInputValues() {
       return {
-        type: document.querySelector(DOMstrings.inputType).value, // 'inc' or 'exp'
-        description: document.querySelector(DOMstrings.inputDescription).value, // it's <input/>
-        value: parseFloat(document.querySelector(DOMstrings.inputValue).value) // <input type="number"/>
+        type: document.querySelector(DOMStrings.inputType).value, // may be 'inc' or 'exp'
+        description: document.querySelector(DOMStrings.inputDescription).value,
+        moneyValue: parseFloat(document.querySelector(DOMStrings.inputMoneyValue).value)
       };
     },
 
-    getDOMstring() {
-      return DOMstrings;
+    getDOMstrings() {
+      return DOMStrings;
     },
 
-    addListItem(obj, type) {
-      let html, newHtml, elem;
-
-      // Create HTML string with placeholder text
+    addItem(obj, type) {
+      let html, newHtml, container;
+      // 1. Create HTML string
       if (type === 'inc') {
-        elem = DOMstrings.incomeContainer;
+        container = DOMStrings.incomesList;
         html =
           '<div class="item clearfix" id="inc-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
       } else if (type === 'exp') {
-        elem = DOMstrings.expensesContainer;
+        container = DOMStrings.expensesList;
         html =
           '<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
       }
-
-      // Replace the placeholder text with some actual data
+      // 2. Replace the placeholder in HTML string
       newHtml = html.replace('%id%', obj.id);
+      newHtml = newHtml.replace('%value%', formatNumber(obj.moneyValue, type));
       newHtml = newHtml.replace('%description%', obj.description);
-      newHtml = newHtml.replace('%value%', formatNumber(obj.value, type));
-
-      // Insert the HTML into the DOM
-      document.querySelector(elem).insertAdjacentHTML('beforeend', newHtml);
+      // 3. Insert HTML string into the DOM
+      document.querySelector(container).insertAdjacentHTML('beforeend', newHtml);
     },
 
-    deleteListItem(selectorId) {
-      const elem = document.getElementById(selectorId);
-      elem.parentNode.removeChild(elem);
+    deleteItem(id) {
+      const el = document.getElementById(id);
+      el.parentNode.removeChild(el); // сама себя удаляет
     },
 
     clearFields() {
       const fields = document.querySelectorAll(
-        DOMstrings.inputDescription + ', ' + DOMstrings.inputValue
+        DOMStrings.inputDescription + ', ' + DOMStrings.inputMoneyValue
       );
-
-      const fieldsArr = [].slice.call(fields); // превратили коллекцию узлов в массив
-
-      fieldsArr.forEach(el => {
-        el.value = ''; // очистили поля
+      [].forEach.call(fields, el => {
+        el.value = '';
       });
-      fieldsArr[0].focus(); // возвращаем фокус полю с описанием
+      fields[0].focus(); // возращаем фокус первому полю
     },
 
-    displayPercentages(percentages) {
-      const fields = document.querySelectorAll(DOMstrings.expensesPercLabel);
+    displayBudget(obj) {
+      let type;
+      obj.pureIncome > 0 ? (type = 'inc') : (type = 'exp');
+
+      document.querySelector(DOMStrings.budgetLabel).textContent = formatNumber(obj.pureIncome, type);
+      document.querySelector(DOMStrings.incomeLabel).textContent = formatNumber(obj.totalInc, 'inc');
+      document.querySelector(DOMStrings.expenseLabel).textContent = formatNumber(obj.totalExp, 'exp');
+      if (obj.totalPercentage > 0) {
+        document.querySelector(DOMStrings.totalPercentageLabel).textContent = obj.totalPercentage + '%';
+      } else {
+        document.querySelector(DOMStrings.totalPercentageLabel).textContent = '---';
+      }
+    },
+
+    displayPercentageEachItem(percentages) {
+      const fields = document.querySelectorAll(DOMStrings.eachPercentageLable);
 
       nodeListForEach(fields, (el, index) => {
         if (percentages[index] > 0) {
@@ -104,50 +109,34 @@ const UIController = (function() {
         }
       });
     },
-
-    displayBudget(obj) {
-      let type;
-      obj.budget > 0 ? (type = 'inc') : (type = 'exp');
-
-      document.querySelector(DOMstrings.budgetLabel).textContent = formatNumber(obj.budget, type);
-      document.querySelector(DOMstrings.incomeLabel).textContent = formatNumber(obj.totalInc, 'inc');
-      document.querySelector(DOMstrings.expensesLabel).textContent = formatNumber(obj.totalExp, 'exp');
-
-      if (obj.percentage > 0) {
-        document.querySelector(DOMstrings.percentageLabel).textContent = obj.percentage + '%';
-      } else {
-        document.querySelector(DOMstrings.percentageLabel).textContent = '---';
-      }
-    },
-
+    // Вызывается в init()
     displayDate() {
-      const currDate = new Date(),
-        month = currDate.getMonth(),
-        year = currDate.getFullYear(),
-        months = [
-          'January',
-          'February',
-          'March',
-          'April',
-          'May',
-          'June',
-          'July',
-          'August',
-          'September',
-          'October',
-          'November',
-          'December'
-        ];
-
-      document.querySelector(DOMstrings.dateLabel).textContent = months[month] + ' ' + year;
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const months = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+      ];
+      document.querySelector(DOMStrings.dateLabel).textContent = months[month] + ' ' + year;
     },
-
-    changedType() {
+    // Чтобы поля расхода выделялисть красным при выборе
+    changedFieldType() {
       const fields = document.querySelectorAll(
-        DOMstrings.inputType + ',' + DOMstrings.inputDescription + ',' + DOMstrings.inputValue
+        DOMStrings.inputType + ',' + DOMStrings.inputDescription + ',' + DOMStrings.inputMoneyValue
       );
       nodeListForEach(fields, el => el.classList.toggle('red-focus'));
-      document.querySelector(DOMstrings.inputButton).classList.toggle('red');
+      document.querySelector(DOMStrings.addButton).classList.toggle('red');
     }
   };
 })();

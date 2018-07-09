@@ -1,90 +1,91 @@
 // CONTROLLER.
-// 1) Add event handler. 2) Join Module and View.
-const Controller = (function(budgetCtrl, UICtrl) {
-  const updateBudget = function() {
+// 1) Add event handler. 2) Join Model and View.
+const Controller = (function(budgetDataCtrl, UICtrl) {
+  function updatePercentageEachItem() {
+    // 1. Calculate percentages
+    budgetDataCtrl.calcPercentageEachItem();
+    // 2. Read percentages from the budgetDataController
+    const percentages = budgetDataCtrl.getPercentageEachItem();
+    // 3. Update the UI
+    UICtrl.displayPercentageEachItem(percentages);
+  }
+
+  function updateBudget() {
     // 1. Calculate the budget
-    budgetCtrl.calculateBudget();
+    budgetDataCtrl.calculateBudget();
     // 2. Return the budget
-    const budget = budgetCtrl.getBudget();
+    const budget = budgetDataCtrl.getBudget();
     // 3. Display the budget on the UI
     UICtrl.displayBudget(budget);
-  };
+  }
 
-  const updatePercentages = function() {
-    // 1. Calculate percentages
-    budgetCtrl.calculatePercentages();
-    // 2. Read percentages from the budget controller
-    const percentages = budgetCtrl.getPercentages();
-    // 3. Update the UI with the new percentages
-    UICtrl.displayPercentages(percentages);
-  };
+  function addItem() {
+    // 1. Get the fields input data
+    const fieldsValue = UICtrl.getInputValues();
 
-  const ctrlAddItem = function() {
-    // 1. Get the field input data
-    const input = UICtrl.getInput(); // Получаем объект со всеми значениями полей ввода.
-
-    if (input.description !== '' && !isNaN(input.value) && input.value > 0) {
-      // 2. Add the item to the MODEL(DATA)
-      const newItem = budgetCtrl.addItem(input.type, input.description, input.value);
+    const tempStr = fieldsValue.description.trim(); // исключаем строку с пробелами
+    if (fieldsValue.description && tempStr && !isNaN(fieldsValue.moneyValue) && fieldsValue.moneyValue > 0) {
+      // 2. Add the item to the budgetDataController
+      const newItem = budgetDataCtrl.addItem(
+        fieldsValue.type,
+        fieldsValue.description,
+        fieldsValue.moneyValue
+      );
       // 3. Add the item to the UI
-      UICtrl.addListItem(newItem, input.type);
+      UICtrl.addItem(newItem, fieldsValue.type);
       // 4. Clear the fields
       UICtrl.clearFields();
       // 5. Calculate and update budget
       updateBudget();
-      // 6. Calculate and update percentages
-      updatePercentages();
+      // 6. Update percentage for each item
+      updatePercentageEachItem();
     }
-  };
+  }
 
-  const ctrlDeleteItem = function(event) {
-    const itemId = event.target.parentNode.parentNode.parentNode.parentNode.id;
-
+  function deleteItem(event) {
+    const itemId = event.target.parentNode.parentNode.parentNode.parentNode.id; // 'inc-0'
     if (itemId) {
-      const splitId = itemId.split('-');
-      const type = splitId[0];
-      const ID = +splitId[1];
-
-      // 1. Delete the item from the data structure
-      budgetCtrl.deleteItem(type, ID);
-      // 2. Delete the item from the UI
-      UICtrl.deleteListItem(itemId);
+      const strId = itemId.split('-');
+      const type = strId[0];
+      const id = +strId[1];
+      // 1. Delete item from the budgetDataController
+      budgetDataCtrl.deleteItem(type, id);
+      // 2. Delete item from the UI
+      UICtrl.deleteItem(itemId);
       // 3. Update and show the new budget
       updateBudget();
-      // 4. Calculate and update percentages
-      updatePercentages();
+      // 4. Update percentage for each item
+      updatePercentageEachItem();
     }
-  };
+  }
 
-  const setupEventListeners = function() {
-    const DOMstrings = UICtrl.getDOMstring(); // Получили все строки с представления
+  function setupEventListeners() {
+    const DOMStrings = UICtrl.getDOMstrings();
 
-    // Нажатие кнопки с птичкой.
-    document.querySelector(DOMstrings.inputButton).addEventListener('click', ctrlAddItem);
-
-    // Нажатие ENTER в любом месте документа.
+    document.querySelector(DOMStrings.addButton).addEventListener('click', addItem);
     document.addEventListener('keypress', event => {
       if (event.keyCode === 13 || event.which === 13) {
-        ctrlAddItem();
+        addItem();
       }
     });
-
-    document.querySelector(DOMstrings.container).addEventListener('click', ctrlDeleteItem);
-    document.querySelector(DOMstrings.inputType).addEventListener('change', UICtrl.changedType);
-  };
+    // Перехватываем события с кнопок удаления
+    document.querySelector(DOMStrings.container).addEventListener('click', deleteItem);
+    // Чтобы поля расхода выделялисть красным при выборе
+    document.querySelector(DOMStrings.inputType).addEventListener('change', UICtrl.changedFieldType);
+  }
 
   return {
     init() {
       UICtrl.displayDate();
       UICtrl.displayBudget({
-        budget: 0,
+        pureIncome: 0,
         totalInc: 0,
         totalExp: 0,
-        percentage: 0
+        totalPercentage: 0
       });
       setupEventListeners();
     }
   };
-})(BudgetController, UIController);
+})(BudgetDataCtrl, UIController);
 
 Controller.init();
