@@ -24,7 +24,12 @@ const Controller = (function(budgetDataCtrl, UICtrl) {
     const fieldsValue = UICtrl.getInputValues();
 
     const tempStr = fieldsValue.description.trim(); // исключаем строку с пробелами
-    if (fieldsValue.description && tempStr && !isNaN(fieldsValue.moneyValue) && fieldsValue.moneyValue > 0) {
+    if (
+      fieldsValue.description &&
+      tempStr &&
+      !isNaN(fieldsValue.moneyValue) &&
+      fieldsValue.moneyValue > 0
+    ) {
       // 2. Add the item to the budgetDataController
       const newItem = budgetDataCtrl.addItem(
         fieldsValue.type,
@@ -45,7 +50,7 @@ const Controller = (function(budgetDataCtrl, UICtrl) {
   function deleteItem(event) {
     const itemId = event.target.parentNode.parentNode.parentNode.parentNode.id; // 'inc-0'
     if (itemId) {
-      const strId = itemId.split('-');
+      const strId = itemId.split("-");
       const type = strId[0];
       const id = +strId[1];
       // 1. Delete item from the budgetDataController
@@ -62,16 +67,22 @@ const Controller = (function(budgetDataCtrl, UICtrl) {
   function setupEventListeners() {
     const DOMStrings = UICtrl.getDOMstrings();
 
-    document.querySelector(DOMStrings.addButton).addEventListener('click', addItem);
-    document.addEventListener('keypress', event => {
+    document
+      .querySelector(DOMStrings.addButton)
+      .addEventListener("click", addItem);
+    document.addEventListener("keypress", event => {
       if (event.keyCode === 13 || event.which === 13) {
         addItem();
       }
     });
     // Перехватываем события с кнопок удаления
-    document.querySelector(DOMStrings.container).addEventListener('click', deleteItem);
+    document
+      .querySelector(DOMStrings.container)
+      .addEventListener("click", deleteItem);
     // Чтобы поля расхода выделялисть красным при выборе
-    document.querySelector(DOMStrings.inputType).addEventListener('change', UICtrl.changedFieldType);
+    document
+      .querySelector(DOMStrings.inputType)
+      .addEventListener("change", UICtrl.changedFieldType);
   }
 
   return {
