@@ -57,9 +57,9 @@ const BudgetDataCtrl = (function() {
         id = tempArr[tempArr.length - 1].id + 1;
       }
 
-      if (type === "inc") {
+      if (type === 'inc') {
         newItem = new Income(id, descr, moneyVal);
-      } else if (type === "exp") {
+      } else if (type === 'exp') {
         newItem = new Expense(id, descr, moneyVal);
       }
       data.allItems[type].push(newItem);
@@ -76,14 +76,12 @@ const BudgetDataCtrl = (function() {
 
     calculateBudget() {
       // 1. Calculate total income and expenses
-      calculateTotal("inc");
-      calculateTotal("exp");
+      calculateTotal('inc');
+      calculateTotal('exp');
       // 2. Calculate percentage
       data.pureIncome = data.totals.inc - data.totals.exp;
       if (data.totals.inc > 0) {
-        data.totalPercentage = Math.round(
-          (data.totals.exp / data.totals.inc) * 100
-        );
+        data.totalPercentage = Math.round((data.totals.exp / data.totals.inc) * 100);
       }
     },
 
