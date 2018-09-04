@@ -1,106 +1,103 @@
-// MODEL (DATA).
-// 1) Add the new item to our data structure. 2) Calculate budget.
-const BudgetDataCtrl = (function() {
-  function Income(id, description, moneyValue) {
+const DataController = (function() {
+  function Expense(id, description, value) {
     this.id = id;
     this.description = description;
-    this.moneyValue = moneyValue;
-  }
-
-  function Expense(id, description, moneyValue) {
-    this.id = id;
-    this.description = description;
-    this.moneyValue = moneyValue;
+    this.value = value;
     this.percentage = -1;
   }
-
-  Expense.prototype.calcPercentage = function(totalIncome) {
+  Expense.prototype.calcIndividPercentage = function(totalIncome) {
     if (totalIncome > 0) {
-      this.percentage = Math.round((this.moneyValue / totalIncome) * 100);
-    } else {
-      this.percentage = -1;
+      this.percentage = Math.round((this.value / totalIncome) * 100);
     }
   };
-
   Expense.prototype.getPercentage = function() {
     return this.percentage;
   };
 
+  function Income(id, description, value) {
+    this.id = id;
+    this.description = description;
+    this.value = value;
+  }
+
   const data = {
     allItems: {
-      inc: [],
-      exp: []
+      exp: [],
+      inc: []
     },
     totals: {
-      inc: 0,
-      exp: 0
+      exp: 0,
+      inc: 0
     },
-    pureIncome: 0,
-    totalPercentage: -1
+    budget: 0, // income - expenses
+    percentage: -1 // общий % расходов
   };
 
   function calculateTotal(type) {
     let sum = 0;
     data.allItems[type].forEach(el => {
-      sum += el.moneyValue;
+      sum += el.value;
     });
     data.totals[type] = sum;
   }
 
   return {
-    addItem(type, descr, moneyVal) {
-      let newItem,
-        id = 0;
-
+    addItem(type, descr, val) {
+      let newItem, id;
+      // Create new id
       if (data.allItems[type].length > 0) {
-        const tempArr = data.allItems[type];
-        id = tempArr[tempArr.length - 1].id + 1;
+        id = data.allItems[type][data.allItems[type].length - 1].id + 1;
+      } else {
+        id = 0;
       }
 
-      if (type === 'inc') {
-        newItem = new Income(id, descr, moneyVal);
-      } else if (type === 'exp') {
-        newItem = new Expense(id, descr, moneyVal);
+      if (type === 'exp') {
+        newItem = new Expense(id, descr, val);
+      } else if (type === 'inc') {
+        newItem = new Income(id, descr, val);
       }
       data.allItems[type].push(newItem);
       return newItem;
     },
 
-    deleteItem(type, id) {
-      const ids = data.allItems[type].map(el => el.id);
-      const index = ids.indexOf(id);
-      if (~index) {
-        data.allItems[type].splice(index, 1);
-      }
-    },
-
     calculateBudget() {
       // 1. Calculate total income and expenses
-      calculateTotal('inc');
       calculateTotal('exp');
-      // 2. Calculate percentage
-      data.pureIncome = data.totals.inc - data.totals.exp;
+      calculateTotal('inc');
+      // 2. Calculate: income - expenses
+      data.budget = data.totals.inc - data.totals.exp;
+      // 3. Calculate the percentage of income
       if (data.totals.inc > 0) {
-        data.totalPercentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+        data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
       }
     },
 
     getBudget() {
       return {
-        pureIncome: data.pureIncome,
+        budget: data.budget,
         totalInc: data.totals.inc,
         totalExp: data.totals.exp,
-        totalPercentage: data.totalPercentage
+        percentage: data.percentage
       };
     },
 
-    calcPercentageEachItem() {
+    deleteItem(id, type) {
+      // const ids = data.allItems[type].map(el => el.id); // получаем массив из айдишников
+      // const index = ids.indexOf(id);
+      const index = data.allItems[type].findIndex(el => el.id === id);
+      if (~index) {
+        data.allItems[type].splice(index, 1);
+      }
+    },
+
+    // Индивидуальный процент для каждого эл-та расхода
+    calculatePercentages() {
       data.allItems.exp.forEach(el => {
-        el.calcPercentage(data.totals.inc);
+        el.calcIndividPercentage(data.totals.inc);
       });
     },
 
-    getPercentageEachItem() {
+    getPercentages() {
       return data.allItems.exp.map(el => el.getPercentage());
     },
 
